@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Majra.com — AI Workboard & Compliance Copilot</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0e1320;--card:#0f1a2d;--muted:#9fb1c6;--brand:#28d17c;--ink:#eaf4ff}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+    .wrap{max-width:1120px;margin:28px auto;padding:0 16px}
+    header{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+    header img{width:44px;height:44px;border-radius:10px}
+    header h1{font-size:20px;margin:0;font-weight:800}
+    nav{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 24px}
+    .tab{padding:10px 14px;border:1px solid #223356;background:#121e35;border-radius:10px;color:var(--muted);cursor:pointer}
+    .tab.active{background:#152440;color:#fff;border-color:#29406e}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px}
+    @media (min-width:900px){.grid{grid-template-columns:1.4fr .9fr}}
+    .card{background:var(--card);border:1px solid #1e2b48;border-radius:14px;padding:16px}
+    h2{margin:0 0 12px 0;font-size:16px}
+    textarea{width:100%;min-height:150px;background:#0b1426;border:1px solid #223356;color:#e9f3ff;border-radius:10px;padding:12px;resize:vertical}
+    .row{display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap}
+    button{background:var(--brand);color:#052b16;border:0;padding:10px 16px;border-radius:10px;font-weight:800;cursor:pointer}
+    input[type=file]{accent-color:var(--brand);color:#d7e6ff}
+    .out{background:#0b1426;border:1px solid #223356;border-radius:10px;padding:12px;min-height:110px;white-space:pre-wrap}
+    .muted{color:var(--muted);font-size:13px}
+    footer{margin-top:20px;color:#7892ad;font-size:12px;text-align:center}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0b1426;border:1px solid #213556;color:#9fb1c6;margin-right:6px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img src="https://raw.githubusercontent.com/sharmavipin495-cloud/majra-site/main/logo.png" onerror="this.style.display='none'">
+      <h1>Majra.com — AI Workboard & Compliance Copilot</h1>
+    </header>
+
+    <nav>
+      <div class="pill">FSA</div>
+      <div class="pill">ISO 22000</div>
+      <div class="pill">BRCGS</div>
+      <div class="pill">SALSA</div>
+      <div class="pill">HACCP</div>
+    </nav>
+
+    <div class="grid">
+      <!-- Chat (Majra Talk) -->
+      <section class="card">
+        <h2>Majra Talk (ChatGPT inside)</h2>
+        <p class="muted">Ask about HACCP steps, SALSA clauses, labelling, audits, corrective actions, etc.</p>
+        <textarea id="prompt" placeholder="e.g., “List HACCP’s 7 principles and give examples for a bakery.”"></textarea>
+        <div class="row">
+          <button id="askBtn">Send</button>
+          <span id="chatStatus" class="muted"></span>
+        </div>
+        <div id="chatOut" class="out" style="margin-top:10px;"></div>
+      </section>
+
+      <!-- Vision (Contamination check) -->
+      <section class="card">
+        <h2>Image Check (Contamination / PPE / Hygiene)</h2>
+        <input id="imgFile" type="file" accept="image/*">
+        <div class="row">
+          <button id="visBtn">Analyze image</button>
+          <span id="visStatus" class="muted"></span>
+        </div>
+        <div id="visOut" class="out" style="margin-top:10px;"></div>
+      </section>
+    </div>
+
+    <footer>© Majra — AI for Health & Compliance</footer>
+  </div>
+
+<script>
+const chatBtn = document.getElementById('askBtn');
+const chatOut = document.getElementById('chatOut');
+const chatStatus = document.getElementById('chatStatus');
+const promptEl = document.getElementById('prompt');
+
+chatBtn.onclick = async () => {
+  const user = promptEl.value.trim();
+  if (!user) { promptEl.focus(); return; }
+  chatStatus.textContent = 'Thinking…';
+  chatOut.textContent = '';
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: 'You are Majra Compliance Copilot. Keep answers concise and actionable.' },
+          { role: 'user', content: user }
+        ]
+      })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    // server returns OpenAI response; try to read assistant text robustly
+    const msg = data?.choices?.[0]?.message?.content || data?.message || JSON.stringify(data, null, 2);
+    chatOut.textContent = msg;
+  } catch (e) {
+    chatOut.textContent = 'Error: ' + e.message;
+  } finally {
+    chatStatus.textContent = '';
+  }
+};
+
+// Vision
+const visBtn = document.getElementById('visBtn');
+const visOut = document.getElementById('visOut');
+const visStatus = document.getElementById('visStatus');
+const imgFile = document.getElementById('imgFile');
+
+visBtn.onclick = async () => {
+  const file = imgFile.files?.[0];
+  if (!file) { visOut.textContent = 'Please select an image first.'; return; }
+  visStatus.textContent = 'Analyzing…';
+  visOut.textContent = '';
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const res = await fetch('/api/vision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role:'user', content:'Analyze this for contamination, hygiene, PPE, and risks.' }],
+          imageDataUrl: reader.result
+        })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      const msg = data?.choices?.[0]?.message?.content || data?.message || JSON.stringify(data, null, 2);
+      visOut.textContent = msg;
+    } catch (e) {
+      visOut.textContent = 'Error: ' + e.message;
+    } finally {
+      visStatus.textContent = '';
+    }
+  };
+  reader.readAsDataURL(file);
+};
+</script>
+</body>
+</html>
