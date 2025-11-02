@@ -14,8 +14,7 @@
     header img{width:44px;height:44px;border-radius:10px}
     header h1{font-size:20px;margin:0;font-weight:800}
     nav{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 24px}
-    .tab{padding:10px 14px;border:1px solid #223356;background:#121e35;border-radius:10px;color:var(--muted);cursor:pointer}
-    .tab.active{background:#152440;color:#fff;border-color:#29406e}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0b1426;border:1px solid #213556;color:#9fb1c6;margin-right:6px}
     .grid{display:grid;grid-template-columns:1fr;gap:16px}
     @media (min-width:900px){.grid{grid-template-columns:1.4fr .9fr}}
     .card{background:var(--card);border:1px solid #1e2b48;border-radius:14px;padding:16px}
@@ -27,7 +26,6 @@
     .out{background:#0b1426;border:1px solid #223356;border-radius:10px;padding:12px;min-height:110px;white-space:pre-wrap}
     .muted{color:var(--muted);font-size:13px}
     footer{margin-top:20px;color:#7892ad;font-size:12px;text-align:center}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0b1426;border:1px solid #213556;color:#9fb1c6;margin-right:6px}
   </style>
 </head>
 <body>
@@ -38,15 +36,11 @@
     </header>
 
     <nav>
-      <div class="pill">FSA</div>
-      <div class="pill">ISO 22000</div>
-      <div class="pill">BRCGS</div>
-      <div class="pill">SALSA</div>
-      <div class="pill">HACCP</div>
+      <div class="pill">FSA</div><div class="pill">ISO 22000</div>
+      <div class="pill">BRCGS</div><div class="pill">SALSA</div><div class="pill">HACCP</div>
     </nav>
 
     <div class="grid">
-      <!-- Chat (Majra Talk) -->
       <section class="card">
         <h2>Majra Talk (ChatGPT inside)</h2>
         <p class="muted">Ask about HACCP steps, SALSA clauses, labelling, audits, corrective actions, etc.</p>
@@ -58,7 +52,6 @@
         <div id="chatOut" class="out" style="margin-top:10px;"></div>
       </section>
 
-      <!-- Vision (Contamination check) -->
       <section class="card">
         <h2>Image Check (Contamination / PPE / Hygiene)</h2>
         <input id="imgFile" type="file" accept="image/*">
@@ -97,17 +90,13 @@ chatBtn.onclick = async () => {
     });
     if (!res.ok) throw new Error(await res.text());
     const data = await res.json();
-    // server returns OpenAI response; try to read assistant text robustly
     const msg = data?.choices?.[0]?.message?.content || data?.message || JSON.stringify(data, null, 2);
     chatOut.textContent = msg;
   } catch (e) {
     chatOut.textContent = 'Error: ' + e.message;
-  } finally {
-    chatStatus.textContent = '';
-  }
+  } finally { chatStatus.textContent = ''; }
 };
 
-// Vision
 const visBtn = document.getElementById('visBtn');
 const visOut = document.getElementById('visOut');
 const visStatus = document.getElementById('visStatus');
@@ -135,9 +124,7 @@ visBtn.onclick = async () => {
       visOut.textContent = msg;
     } catch (e) {
       visOut.textContent = 'Error: ' + e.message;
-    } finally {
-      visStatus.textContent = '';
-    }
+    } finally { visStatus.textContent = ''; }
   };
   reader.readAsDataURL(file);
 };
